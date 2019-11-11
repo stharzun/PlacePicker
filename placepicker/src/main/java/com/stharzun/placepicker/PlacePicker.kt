@@ -2,13 +2,23 @@ package com.stharzun.placepicker
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
+import android.location.Location
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.api.GoogleApiClient
+import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -21,6 +31,8 @@ class PlacePicker : AppCompatActivity(), OnMapReadyCallback {
     companion object {
         const val Latitude = "com.stharzun.placepicker.latitude"
         const val Longitude = "com.stharzun.placepicker.longitude"
+        const val MY_PERMISSIONS_REQUEST_LOCATION = 99
+
     }
 
     private lateinit var mMap: GoogleMap
@@ -36,6 +48,7 @@ class PlacePicker : AppCompatActivity(), OnMapReadyCallback {
 
         selectThisLocation = findViewById(R.id.select_this_location)
         markerPosition = findViewById(R.id.marker_position)
+        markerPosition.visibility = View.GONE
 
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
@@ -55,6 +68,7 @@ class PlacePicker : AppCompatActivity(), OnMapReadyCallback {
     private fun configureCameraIdle() {
         onCameraIdleListener = GoogleMap.OnCameraIdleListener {
             val latLng = mMap.cameraPosition.target
+            markerPosition.visibility = View.VISIBLE
             markerPosition.text = getTitle(latLng.latitude, latLng.longitude)
         }
     }
@@ -62,27 +76,53 @@ class PlacePicker : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         mMap.setOnCameraIdleListener(onCameraIdleListener)
-        if (ActivityCompat.checkSelfPermission(
+
+        //Initialize Google Play Services
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                moveToCurrentLocation()
+            } else {
+                checkLocationPermission()
+            }
+        } else {
+            moveToCurrentLocation()
+        }
+    }
+
+    private fun checkLocationPermission() {
+        if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
-            && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED
         ) {
-            return
-        }
-
-        LocationServices.getFusedLocationProviderClient(this).flushLocations()
-        LocationServices.getFusedLocationProviderClient(this).lastLocation.addOnCompleteListener(
-            this
-        ) { task ->
-            if (task.isSuccessful) {
-                val loc = LatLng(task.result?.latitude!!, task.result?.longitude!!)
-                mMap.animateCamera(
-                    CameraUpdateFactory.newLatLngZoom(
-                        loc,
-                        15.0f
-                    )
+            if (ActivityCompat.shouldShowRequestPermissionRationale(
+                    this,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                )
+            ) {
+                AlertDialog.Builder(this)
+                    .setTitle("Location Permission Needed")
+                    .setMessage("This app need the Location permission, please accept to use location functionality")
+                    .setPositiveButton("OK") { _, _ ->
+                        //Prompt the user once explanation has been shown
+                        ActivityCompat.requestPermissions(
+                            this,
+                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                            MY_PERMISSIONS_REQUEST_LOCATION
+                        )
+                    }
+                    .create()
+                    .show()
+            } else {
+                //No explanation needed, we can request the permission.
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                    MY_PERMISSIONS_REQUEST_LOCATION
                 )
             }
         }
@@ -114,5 +154,50 @@ class PlacePicker : AppCompatActivity(), OnMapReadyCallback {
         setResult(Activity.RESULT_CANCELED, returnIntent)
         finish()
     }
+
+    private fun moveToCurrentLocation() {
+        LocationServices.getFusedLocationProviderClient(this).flushLocations()
+        LocationServices.getFusedLocationProviderClient(this).lastLocation.addOnCompleteListener(
+            this
+        ) { task ->
+            if (task.isSuccessful) {
+                val loc = LatLng(task.result?.latitude!!, task.result?.longitude!!)
+                mMap.animateCamera(
+                    CameraUpdateFactory.newLatLngZoom(
+                        loc,
+                        15.0f
+                    )
+                )
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        when (requestCode) {
+            MY_PERMISSIONS_REQUEST_LOCATION -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    if (ContextCompat.checkSelfPermission(
+                            this,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        moveToCurrentLocation()
+                    }
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    Toast.makeText(this, "permission denied", Toast.LENGTH_LONG).show()
+                }
+                return
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    }
+
 
 }
