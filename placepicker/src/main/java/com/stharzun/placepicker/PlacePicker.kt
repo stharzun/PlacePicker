@@ -12,6 +12,7 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
@@ -62,6 +63,10 @@ class PlacePicker : AppCompatActivity(), OnMapReadyCallback {
             returnIntent.putExtra(Longitude, sLng)
             setResult(Activity.RESULT_OK, returnIntent)
             finish()
+        }
+
+        findViewById<ImageView>(R.id.back).setOnClickListener {
+            onBackPressed()
         }
     }
 
@@ -163,10 +168,7 @@ class PlacePicker : AppCompatActivity(), OnMapReadyCallback {
             if (task.isSuccessful) {
                 val loc = LatLng(task.result?.latitude!!, task.result?.longitude!!)
                 mMap.animateCamera(
-                    CameraUpdateFactory.newLatLngZoom(
-                        loc,
-                        15.0f
-                    )
+                    CameraUpdateFactory.newLatLngZoom(loc, 18.0f)
                 )
             }
         }
