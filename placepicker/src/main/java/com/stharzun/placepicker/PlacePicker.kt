@@ -175,7 +175,7 @@ class PlacePicker : AppCompatActivity(), OnMapReadyCallback {
                 }catch (e: Exception){
                     e.printStackTrace()
                     //setting default lat long to Kathmandu
-                    val loc = LatLng( 27.700769, 85.300140)
+                    val loc = LatLng( 27.678753,  85.349592)
                     mMap.animateCamera(
                         CameraUpdateFactory.newLatLngZoom(loc, 18.0f)
                     )
