@@ -27,6 +27,7 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import java.io.IOException
+import java.lang.Exception
 
 class PlacePicker : AppCompatActivity(), OnMapReadyCallback {
     companion object {
@@ -166,10 +167,19 @@ class PlacePicker : AppCompatActivity(), OnMapReadyCallback {
             this
         ) { task ->
             if (task.isSuccessful) {
-                val loc = LatLng(task.result?.latitude!!, task.result?.longitude!!)
-                mMap.animateCamera(
-                    CameraUpdateFactory.newLatLngZoom(loc, 18.0f)
-                )
+                try {
+                    val loc = LatLng(task.result?.latitude!!, task.result?.longitude!!)
+                    mMap.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(loc, 18.0f)
+                    )
+                }catch (e: Exception){
+                    e.printStackTrace()
+                    //setting default lat long to Kathmandu
+                    val loc = LatLng( 27.700769, 85.300140)
+                    mMap.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(loc, 18.0f)
+                    )
+                }
             }
         }
     }
