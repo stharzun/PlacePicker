@@ -33,6 +33,7 @@ class PlacePicker : AppCompatActivity(), OnMapReadyCallback {
     companion object {
         const val Latitude = "com.stharzun.placepicker.latitude"
         const val Longitude = "com.stharzun.placepicker.longitude"
+        const val Title = "com.stharzun.placepicker.title"
         const val MY_PERMISSIONS_REQUEST_LOCATION = 99
 
     }
@@ -62,6 +63,7 @@ class PlacePicker : AppCompatActivity(), OnMapReadyCallback {
             val returnIntent = Intent()
             returnIntent.putExtra(Latitude, sLat)
             returnIntent.putExtra(Longitude, sLng)
+            returnIntent.putExtra(Title, getTitle(sLat.toDouble(), sLng.toDouble()))
             setResult(Activity.RESULT_OK, returnIntent)
             finish()
         }
@@ -172,10 +174,10 @@ class PlacePicker : AppCompatActivity(), OnMapReadyCallback {
                     mMap.animateCamera(
                         CameraUpdateFactory.newLatLngZoom(loc, 18.0f)
                     )
-                }catch (e: Exception){
+                } catch (e: Exception) {
                     e.printStackTrace()
                     //setting default lat long to Kathmandu
-                    val loc = LatLng( 27.678753,  85.349592)
+                    val loc = LatLng(27.678753, 85.349592)
                     mMap.animateCamera(
                         CameraUpdateFactory.newLatLngZoom(loc, 18.0f)
                     )
